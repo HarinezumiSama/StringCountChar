@@ -12,7 +12,8 @@
         @"CountUsingLinqAndLocalFunction",
         @"CountUsingForEach",
         @"CountUsingForEachButNoBranching",
-        @"CountUsingSimd"
+        //@"CountUsingSimd",
+        @"CountUsingSimdWithFix"
     };
 
     var maxMethodNameLength = methodNames.Max(s => s.Length);
@@ -36,11 +37,12 @@ namespace StringCountChar
     internal static class TestExecutor
     {
         public static readonly string TestTextData = Resources.TestTextData;
-        public static readonly char SearchChar = 'i';
+        public static readonly char SearchChar = 'e';
 
         public static int Run()
         {
             Console.WriteLine($@"{nameof(Vector)}.{nameof(Vector.IsHardwareAccelerated)}: {Vector.IsHardwareAccelerated}");
+            Console.WriteLine($@"{nameof(Vector)}<{nameof(UInt16)}>.{nameof(Vector<ushort>.Count)}: {Vector<ushort>.Count}");
             Console.WriteLine($@"{nameof(TestTextData)}.{nameof(TestTextData.Length)}: {TestTextData.Length:N0}");
             Console.WriteLine($@"{nameof(SearchChar)}: '{SearchChar}'");
 

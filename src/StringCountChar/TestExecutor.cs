@@ -16,11 +16,12 @@ namespace StringCountChar
     internal static class TestExecutor
     {
         public static readonly string TestTextData = Resources.TestTextData;
-        public static readonly char SearchChar = 'i';
+        public static readonly char SearchChar = 'e';
 
         public static int Run()
         {
             Console.WriteLine($@"{nameof(Vector)}.{nameof(Vector.IsHardwareAccelerated)}: {Vector.IsHardwareAccelerated}");
+            Console.WriteLine($@"{nameof(Vector)}<{nameof(UInt16)}>.{nameof(Vector<ushort>.Count)}: {Vector<ushort>.Count}");
             Console.WriteLine($@"{nameof(TestTextData)}.{nameof(TestTextData.Length)}: {TestTextData.Length:N0}");
             Console.WriteLine($@"{nameof(SearchChar)}: '{SearchChar}'");
 
@@ -41,9 +42,9 @@ namespace StringCountChar
             Console.WriteLine($@"{nameof(StringHelper.CountUsingForEachButNoBranching).PadRight(32)}: {valueOfCountUsingForEachButNoBranching:N0}");
             Trace.Assert(valueOfCountUsingForEachButNoBranching == valueOfCountUsingLinqAndLambda);
 
-            var valueOfCountUsingSimd = TestTextData.CountUsingSimd(SearchChar);
-            Console.WriteLine($@"{nameof(StringHelper.CountUsingSimd).PadRight(32)}: {valueOfCountUsingSimd:N0}");
-            Trace.Assert(valueOfCountUsingSimd == valueOfCountUsingLinqAndLambda);
+            var valueOfCountUsingSimdWithFix = TestTextData.CountUsingSimdWithFix(SearchChar);
+            Console.WriteLine($@"{nameof(StringHelper.CountUsingSimdWithFix).PadRight(32)}: {valueOfCountUsingSimdWithFix:N0}");
+            Trace.Assert(valueOfCountUsingSimdWithFix == valueOfCountUsingLinqAndLambda);
 
 #if DEBUG
             Console.WriteLine();
@@ -70,7 +71,7 @@ namespace StringCountChar
             TestCountUsingLinqAndLocalFunction(iterationCount);
             TestCountUsingForEach(iterationCount);
             TestCountUsingForEachButNoBranching(iterationCount);
-            TestCountUsingSimd(iterationCount);
+            TestCountUsingSimdWithFix(iterationCount);
         }
 #endif
 
@@ -154,7 +155,7 @@ namespace StringCountChar
                 $@"{nameof(StringHelper.CountUsingForEachButNoBranching).PadRight(32)}: {stopwatch.ElapsedMilliseconds:N0} ms ({stopwatch.Elapsed})");
         }
 
-        private static void TestCountUsingSimd(int iterationCount)
+        private static void TestCountUsingSimdWithFix(int iterationCount)
         {
             var totalCount = 0;
 
@@ -163,7 +164,7 @@ namespace StringCountChar
             {
                 unchecked
                 {
-                    totalCount += TestTextData.CountUsingSimd(SearchChar);
+                    totalCount += TestTextData.CountUsingSimdWithFix(SearchChar);
                 }
             }
             stopwatch.Stop();
@@ -171,7 +172,7 @@ namespace StringCountChar
             Trace.Assert(totalCount != 0);  // Just using the variable
 
             Console.WriteLine(
-                $@"{nameof(StringHelper.CountUsingSimd).PadRight(32)}: {stopwatch.ElapsedMilliseconds:N0} ms ({stopwatch.Elapsed})");
+                $@"{nameof(StringHelper.CountUsingSimdWithFix).PadRight(32)}: {stopwatch.ElapsedMilliseconds:N0} ms ({stopwatch.Elapsed})");
         }
     }
 }
