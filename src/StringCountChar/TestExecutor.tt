@@ -1,0 +1,110 @@
+﻿<#@ template debug="false" hostspecific="false" language="C#" #>
+<#@ assembly name="System.Core" #>
+<#@ import namespace="System" #>
+<#@ import namespace="System.Collections.Generic" #>
+<#@ import namespace="System.Linq" #>
+<#@ import namespace="System.Text" #>
+<#@ output extension=".cs" #>
+
+<#
+    var methodNames = new[]
+    {
+        @"CountUsingLinqAndLambda",
+        @"CountUsingLinqAndLocalFunction",
+        @"CountUsingForEach",
+        @"CountUsingForEachButNoBranching",
+        @"CountUsingSimd"
+    };
+
+    var maxMethodNameLength = methodNames.Max(s => s.Length);
+    var methodNamePadLength = maxMethodNameLength + 1;
+#>
+
+using System;
+using System.Diagnostics;
+using System.Numerics;
+using StringCountChar.Properties;
+
+namespace StringCountChar
+{
+    internal static class TestExecutor
+    {
+        public static readonly string TestTextData = Resources.TestTextData;
+        public static readonly char SearchChar = 'i';
+
+        public static void Run()
+        {
+            Console.WriteLine($@"{nameof(Vector)}.{nameof(Vector.IsHardwareAccelerated)}: {Vector.IsHardwareAccelerated}");
+            Console.WriteLine($@"{nameof(TestTextData)}.{nameof(TestTextData.Length)}: {TestTextData.Length:N0}");
+            Console.WriteLine($@"{nameof(SearchChar)}: '{SearchChar}'");
+
+            Console.WriteLine();
+            Console.WriteLine(@"* Warming up and validating results.");
+<#
+    var firstMethodName = methodNames.First();
+    foreach (var methodName in methodNames)
+    {
+#>
+            var valueOf<#= methodName #> = TestTextData.<#= methodName #>(SearchChar);
+            Console.WriteLine($@"{nameof(StringHelper.<#= methodName #>).PadRight(<#= methodNamePadLength #>)}: {valueOf<#= methodName #>:N0}");
+<#
+        if (methodName != firstMethodName)
+        {
+#>
+            Trace.Assert(valueOf<#= methodName #> == valueOf<#= firstMethodName #>);
+<#
+        }
+#>
+
+<#
+    }
+#>
+            //// Tests
+            RunPerformanceTests(10);
+            RunPerformanceTests(50);
+            RunPerformanceTests(100);
+            RunPerformanceTests(500);
+            RunPerformanceTests(1000);
+        }
+
+        private static void RunPerformanceTests(int iterationCount)
+        {
+            Console.WriteLine();
+            Console.WriteLine($@"* Running performance tests (iteration count: {iterationCount}).");
+
+<#
+    foreach (var methodName in methodNames)
+    {
+#>
+            Test<#= methodName #>(iterationCount);
+<#
+    }
+#>
+        }
+<#
+    foreach (var methodName in methodNames)
+    {
+#>
+
+        private static void Test<#= methodName #>(int iterationCount)
+        {
+            var totalCount = 0;
+
+            var stopwatch = Stopwatch.StartNew();
+            for (var index = 0; index < iterationCount; index++)
+            {
+                unchecked
+                {
+                    totalCount += TestTextData.<#= methodName #>(SearchChar);
+                }
+            }
+            stopwatch.Stop();
+
+            Trace.Assert(totalCount != 0);  // Just using the variable
+
+            Console.WriteLine(
+                $@"{nameof(StringHelper.<#= methodName #>).PadRight(<#= methodNamePadLength #>)}: {stopwatch.ElapsedMilliseconds:N0} ms ({stopwatch.Elapsed})");
+        }
+<#  } #>
+    }
+}
