@@ -2,9 +2,6 @@
 {
     internal static class Program
     {
-        private static void Main()
-        {
-            TestExecutor.Run();
-        }
+        private static int Main() => TestExecutor.Run();
     }
 }
