@@ -8,7 +8,7 @@ using System.Runtime.InteropServices;
 namespace StringCountChar
 {
     [SuppressMessage("ReSharper", "ForeachCanBeConvertedToQueryUsingAnotherGetEnumerator")]
-    public static class StringHelper
+    internal static class StringHelper
     {
         public static int CountUsingLinqAndLambda(this string text, char c) => text.Count(character => character == c);
 
@@ -55,7 +55,7 @@ namespace StringCountChar
             return count;
         }
 
-        public static int CountUsingSimd(this string text, char c)
+        public static int CountUsingSimdWithUShortLimit(this string text, char c)
         {
             /* Get a reference to the first string character.
              * Strings are supposed to be immutable in .NET, so
@@ -136,7 +136,7 @@ namespace StringCountChar
             return result;
         }
 
-        public static int CountUsingSimdWithFix(this string text, char c)
+        public static int CountUsingSimd(this string text, char c)
         {
             /* Get a reference to the first string character.
              * Strings are supposed to be immutable in .NET, so

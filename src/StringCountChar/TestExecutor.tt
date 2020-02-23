@@ -12,10 +12,11 @@
         @"CountUsingLinqAndLocalFunction",
         @"CountUsingForEach",
         @"CountUsingForEachButNoBranching",
-        //@"CountUsingSimd",
-        @"CountUsingSimdWithFix"
+        @"CountUsingSimdWithUShortLimit",
+        @"CountUsingSimd"
     };
 
+    var firstMethodName = methodNames.First();
     var maxMethodNameLength = methodNames.Max(s => s.Length);
     var methodNamePadLength = maxMethodNameLength + 1;
 #>
@@ -36,63 +37,93 @@ namespace StringCountChar
 {
     internal static class TestExecutor
     {
-        public static readonly string TestTextData = Resources.TestTextData;
-        public static readonly char SearchChar = 'e';
+        private static readonly string TestTextData = Resources.TestTextData;
+
+        private static readonly char[] SearchChars = new[] { 'i', 'e' };
+        private static readonly int[] IterationCounts = new[] { 10, 50, 100, 500, 1000 };
+
+        private const string MismatchMessage = @" (ERROR: mismatch)";
 
         public static int Run()
         {
+            Console.ResetColor();
+
+            Console.ForegroundColor = ConsoleColor.Green;
             Console.WriteLine($@"{nameof(Vector)}.{nameof(Vector.IsHardwareAccelerated)}: {Vector.IsHardwareAccelerated}");
             Console.WriteLine($@"{nameof(Vector)}<{nameof(UInt16)}>.{nameof(Vector<ushort>.Count)}: {Vector<ushort>.Count}");
             Console.WriteLine($@"{nameof(TestTextData)}.{nameof(TestTextData.Length)}: {TestTextData.Length:N0}");
-            Console.WriteLine($@"{nameof(SearchChar)}: '{SearchChar}'");
+            Console.ResetColor();
 
             Console.WriteLine();
-            Console.WriteLine(@"* Warming up and validating results.");
+            Console.ForegroundColor = ConsoleColor.Cyan;
+            Console.WriteLine(@"*** Warming up and validating results.");
+            Console.ResetColor();
+
+            foreach (var searchChar in SearchChars)
+            {
+                Console.WriteLine();
+                Console.ForegroundColor = ConsoleColor.Cyan;
+                Console.WriteLine($@"* Search character: '{searchChar}'");
+                Console.ResetColor();
+
 <#
-    var firstMethodName = methodNames.First();
     foreach (var methodName in methodNames)
     {
 #>
-            var valueOf<#= methodName #> = TestTextData.<#= methodName #>(SearchChar);
-            Console.WriteLine($@"{nameof(StringHelper.<#= methodName #>).PadRight(<#= methodNamePadLength #>)}: {valueOf<#= methodName #>:N0}");
-<#
-        if (methodName != firstMethodName)
-        {
-#>
-            Trace.Assert(valueOf<#= methodName #> == valueOf<#= firstMethodName #>);
-<#
-        }
-#>
+                var valueOf<#= methodName #> = TestTextData.<#= methodName #>(searchChar);
+                Console.WriteLine(
+                    $@"{nameof(StringHelper.<#= methodName #>).PadRight(<#= methodNamePadLength #>)}: {
+                        valueOf<#= methodName #>:N0}<#
+                        if (methodName != firstMethodName)
+                        {
+                            #>{
+                        (valueOf<#= methodName #> == valueOf<#= firstMethodName #> ? null: MismatchMessage)}<#
+                        } #>");
 
 <#
     }
 #>
+            }
 #if DEBUG
             Console.WriteLine();
+            Console.ForegroundColor = ConsoleColor.Yellow;
             Console.WriteLine(@"*** To run performance tests, compile this application in the Release configuration.");
+            Console.ResetColor();
             return 1;
 #else
             //// Tests
-            RunPerformanceTests(10);
-            RunPerformanceTests(50);
-            RunPerformanceTests(100);
-            RunPerformanceTests(500);
-            RunPerformanceTests(1000);
+            foreach (var searchChar in SearchChars)
+            {
+                Console.WriteLine();
+                Console.ForegroundColor = ConsoleColor.Magenta;
+                Console.WriteLine(@"----------");
+                Console.ResetColor();
+
+                foreach (var iterationCount in IterationCounts)
+                {
+                    RunPerformanceTests(searchChar, iterationCount);
+                }
+            }
 
             return 0;
 #endif
         }
 #if !DEBUG
-        private static void RunPerformanceTests(int iterationCount)
+        private static void RunPerformanceTests(char searchChar, int iterationCount)
         {
             Console.WriteLine();
-            Console.WriteLine($@"* Running performance tests (iteration count: {iterationCount}).");
+            Console.ForegroundColor = ConsoleColor.Cyan;
+            Console.WriteLine($@"*** Running performance tests (character: '{searchChar}', iteration count: {iterationCount}).");
+            Console.ResetColor();
+
+            ////long? etalonTimeUs = null;
 
 <#
     foreach (var methodName in methodNames)
     {
 #>
-            Test<#= methodName #>(iterationCount);
+            var timeOf<#= methodName #> = Test<#= methodName #>(searchChar, iterationCount, <#
+                if (methodName == firstMethodName) { #>null<# } else { #>timeOf<#= firstMethodName #><# } #>);
 <#
     }
 #>
@@ -103,7 +134,7 @@ namespace StringCountChar
     {
 #>
 
-        private static void Test<#= methodName #>(int iterationCount)
+        private static long Test<#= methodName #>(char searchChar, int iterationCount, long? etalonTimeUs)
         {
             var totalCount = 0;
 
@@ -112,15 +143,25 @@ namespace StringCountChar
             {
                 unchecked
                 {
-                    totalCount += TestTextData.<#= methodName #>(SearchChar);
+                    totalCount += TestTextData.<#= methodName #>(searchChar);
                 }
             }
             stopwatch.Stop();
+            Trace.Assert(totalCount.ToString().Length != 0);  // Just using the variable
 
-            Trace.Assert(totalCount != 0);  // Just using the variable
+            var timeUs = stopwatch.Elapsed.GetTotalIntegralMicroseconds();
+
+            var speedComparisonString = string.Empty;
+            if (etalonTimeUs.HasValue)
+            {
+                var ratio = (decimal)etalonTimeUs.Value / timeUs;
+                speedComparisonString = $@" : {ratio,5:N1}X faster";
+            }
 
             Console.WriteLine(
-                $@"{nameof(StringHelper.<#= methodName #>).PadRight(<#= methodNamePadLength #>)}: {stopwatch.ElapsedMilliseconds:N0} ms ({stopwatch.Elapsed})");
+                $@"{nameof(StringHelper.<#= methodName #>).PadRight(<#= methodNamePadLength #>)}: {timeUs,10:N0} us{speedComparisonString}");
+
+            return timeUs;
         }
 <#  } #>
     }

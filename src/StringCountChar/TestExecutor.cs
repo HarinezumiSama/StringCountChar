@@ -15,67 +15,115 @@ namespace StringCountChar
 {
     internal static class TestExecutor
     {
-        public static readonly string TestTextData = Resources.TestTextData;
-        public static readonly char SearchChar = 'e';
+        private static readonly string TestTextData = Resources.TestTextData;
+
+        private static readonly char[] SearchChars = new[] { 'i', 'e' };
+        private static readonly int[] IterationCounts = new[] { 10, 50, 100, 500, 1000 };
+
+        private const string MismatchMessage = @" (ERROR: mismatch)";
 
         public static int Run()
         {
+            Console.ResetColor();
+
+            Console.ForegroundColor = ConsoleColor.Green;
             Console.WriteLine($@"{nameof(Vector)}.{nameof(Vector.IsHardwareAccelerated)}: {Vector.IsHardwareAccelerated}");
             Console.WriteLine($@"{nameof(Vector)}<{nameof(UInt16)}>.{nameof(Vector<ushort>.Count)}: {Vector<ushort>.Count}");
             Console.WriteLine($@"{nameof(TestTextData)}.{nameof(TestTextData.Length)}: {TestTextData.Length:N0}");
-            Console.WriteLine($@"{nameof(SearchChar)}: '{SearchChar}'");
+            Console.ResetColor();
 
             Console.WriteLine();
-            Console.WriteLine(@"* Warming up and validating results.");
-            var valueOfCountUsingLinqAndLambda = TestTextData.CountUsingLinqAndLambda(SearchChar);
-            Console.WriteLine($@"{nameof(StringHelper.CountUsingLinqAndLambda).PadRight(32)}: {valueOfCountUsingLinqAndLambda:N0}");
+            Console.ForegroundColor = ConsoleColor.Cyan;
+            Console.WriteLine(@"*** Warming up and validating results.");
+            Console.ResetColor();
 
-            var valueOfCountUsingLinqAndLocalFunction = TestTextData.CountUsingLinqAndLocalFunction(SearchChar);
-            Console.WriteLine($@"{nameof(StringHelper.CountUsingLinqAndLocalFunction).PadRight(32)}: {valueOfCountUsingLinqAndLocalFunction:N0}");
-            Trace.Assert(valueOfCountUsingLinqAndLocalFunction == valueOfCountUsingLinqAndLambda);
+            foreach (var searchChar in SearchChars)
+            {
+                Console.WriteLine();
+                Console.ForegroundColor = ConsoleColor.Cyan;
+                Console.WriteLine($@"* Search character: '{searchChar}'");
+                Console.ResetColor();
 
-            var valueOfCountUsingForEach = TestTextData.CountUsingForEach(SearchChar);
-            Console.WriteLine($@"{nameof(StringHelper.CountUsingForEach).PadRight(32)}: {valueOfCountUsingForEach:N0}");
-            Trace.Assert(valueOfCountUsingForEach == valueOfCountUsingLinqAndLambda);
+                var valueOfCountUsingLinqAndLambda = TestTextData.CountUsingLinqAndLambda(searchChar);
+                Console.WriteLine(
+                    $@"{nameof(StringHelper.CountUsingLinqAndLambda).PadRight(32)}: {
+                        valueOfCountUsingLinqAndLambda:N0}");
 
-            var valueOfCountUsingForEachButNoBranching = TestTextData.CountUsingForEachButNoBranching(SearchChar);
-            Console.WriteLine($@"{nameof(StringHelper.CountUsingForEachButNoBranching).PadRight(32)}: {valueOfCountUsingForEachButNoBranching:N0}");
-            Trace.Assert(valueOfCountUsingForEachButNoBranching == valueOfCountUsingLinqAndLambda);
+                var valueOfCountUsingLinqAndLocalFunction = TestTextData.CountUsingLinqAndLocalFunction(searchChar);
+                Console.WriteLine(
+                    $@"{nameof(StringHelper.CountUsingLinqAndLocalFunction).PadRight(32)}: {
+                        valueOfCountUsingLinqAndLocalFunction:N0}{
+                        (valueOfCountUsingLinqAndLocalFunction == valueOfCountUsingLinqAndLambda ? null: MismatchMessage)}");
 
-            var valueOfCountUsingSimdWithFix = TestTextData.CountUsingSimdWithFix(SearchChar);
-            Console.WriteLine($@"{nameof(StringHelper.CountUsingSimdWithFix).PadRight(32)}: {valueOfCountUsingSimdWithFix:N0}");
-            Trace.Assert(valueOfCountUsingSimdWithFix == valueOfCountUsingLinqAndLambda);
+                var valueOfCountUsingForEach = TestTextData.CountUsingForEach(searchChar);
+                Console.WriteLine(
+                    $@"{nameof(StringHelper.CountUsingForEach).PadRight(32)}: {
+                        valueOfCountUsingForEach:N0}{
+                        (valueOfCountUsingForEach == valueOfCountUsingLinqAndLambda ? null: MismatchMessage)}");
 
+                var valueOfCountUsingForEachButNoBranching = TestTextData.CountUsingForEachButNoBranching(searchChar);
+                Console.WriteLine(
+                    $@"{nameof(StringHelper.CountUsingForEachButNoBranching).PadRight(32)}: {
+                        valueOfCountUsingForEachButNoBranching:N0}{
+                        (valueOfCountUsingForEachButNoBranching == valueOfCountUsingLinqAndLambda ? null: MismatchMessage)}");
+
+                var valueOfCountUsingSimdWithUShortLimit = TestTextData.CountUsingSimdWithUShortLimit(searchChar);
+                Console.WriteLine(
+                    $@"{nameof(StringHelper.CountUsingSimdWithUShortLimit).PadRight(32)}: {
+                        valueOfCountUsingSimdWithUShortLimit:N0}{
+                        (valueOfCountUsingSimdWithUShortLimit == valueOfCountUsingLinqAndLambda ? null: MismatchMessage)}");
+
+                var valueOfCountUsingSimd = TestTextData.CountUsingSimd(searchChar);
+                Console.WriteLine(
+                    $@"{nameof(StringHelper.CountUsingSimd).PadRight(32)}: {
+                        valueOfCountUsingSimd:N0}{
+                        (valueOfCountUsingSimd == valueOfCountUsingLinqAndLambda ? null: MismatchMessage)}");
+
+            }
 #if DEBUG
             Console.WriteLine();
+            Console.ForegroundColor = ConsoleColor.Yellow;
             Console.WriteLine(@"*** To run performance tests, compile this application in the Release configuration.");
+            Console.ResetColor();
             return 1;
 #else
             //// Tests
-            RunPerformanceTests(10);
-            RunPerformanceTests(50);
-            RunPerformanceTests(100);
-            RunPerformanceTests(500);
-            RunPerformanceTests(1000);
+            foreach (var searchChar in SearchChars)
+            {
+                Console.WriteLine();
+                Console.ForegroundColor = ConsoleColor.Magenta;
+                Console.WriteLine(@"----------");
+                Console.ResetColor();
+
+                foreach (var iterationCount in IterationCounts)
+                {
+                    RunPerformanceTests(searchChar, iterationCount);
+                }
+            }
 
             return 0;
 #endif
         }
 #if !DEBUG
-        private static void RunPerformanceTests(int iterationCount)
+        private static void RunPerformanceTests(char searchChar, int iterationCount)
         {
             Console.WriteLine();
-            Console.WriteLine($@"* Running performance tests (iteration count: {iterationCount}).");
+            Console.ForegroundColor = ConsoleColor.Cyan;
+            Console.WriteLine($@"*** Running performance tests (character: '{searchChar}', iteration count: {iterationCount}).");
+            Console.ResetColor();
 
-            TestCountUsingLinqAndLambda(iterationCount);
-            TestCountUsingLinqAndLocalFunction(iterationCount);
-            TestCountUsingForEach(iterationCount);
-            TestCountUsingForEachButNoBranching(iterationCount);
-            TestCountUsingSimdWithFix(iterationCount);
+            ////long? etalonTimeUs = null;
+
+            var timeOfCountUsingLinqAndLambda = TestCountUsingLinqAndLambda(searchChar, iterationCount, null);
+            var timeOfCountUsingLinqAndLocalFunction = TestCountUsingLinqAndLocalFunction(searchChar, iterationCount, timeOfCountUsingLinqAndLambda);
+            var timeOfCountUsingForEach = TestCountUsingForEach(searchChar, iterationCount, timeOfCountUsingLinqAndLambda);
+            var timeOfCountUsingForEachButNoBranching = TestCountUsingForEachButNoBranching(searchChar, iterationCount, timeOfCountUsingLinqAndLambda);
+            var timeOfCountUsingSimdWithUShortLimit = TestCountUsingSimdWithUShortLimit(searchChar, iterationCount, timeOfCountUsingLinqAndLambda);
+            var timeOfCountUsingSimd = TestCountUsingSimd(searchChar, iterationCount, timeOfCountUsingLinqAndLambda);
         }
 #endif
 
-        private static void TestCountUsingLinqAndLambda(int iterationCount)
+        private static long TestCountUsingLinqAndLambda(char searchChar, int iterationCount, long? etalonTimeUs)
         {
             var totalCount = 0;
 
@@ -84,18 +132,28 @@ namespace StringCountChar
             {
                 unchecked
                 {
-                    totalCount += TestTextData.CountUsingLinqAndLambda(SearchChar);
+                    totalCount += TestTextData.CountUsingLinqAndLambda(searchChar);
                 }
             }
             stopwatch.Stop();
+            Trace.Assert(totalCount.ToString().Length != 0);  // Just using the variable
 
-            Trace.Assert(totalCount != 0);  // Just using the variable
+            var timeUs = stopwatch.Elapsed.GetTotalIntegralMicroseconds();
+
+            var speedComparisonString = string.Empty;
+            if (etalonTimeUs.HasValue)
+            {
+                var ratio = (decimal)etalonTimeUs.Value / timeUs;
+                speedComparisonString = $@" : {ratio,5:N1}X faster";
+            }
 
             Console.WriteLine(
-                $@"{nameof(StringHelper.CountUsingLinqAndLambda).PadRight(32)}: {stopwatch.ElapsedMilliseconds:N0} ms ({stopwatch.Elapsed})");
+                $@"{nameof(StringHelper.CountUsingLinqAndLambda).PadRight(32)}: {timeUs,10:N0} us{speedComparisonString}");
+
+            return timeUs;
         }
 
-        private static void TestCountUsingLinqAndLocalFunction(int iterationCount)
+        private static long TestCountUsingLinqAndLocalFunction(char searchChar, int iterationCount, long? etalonTimeUs)
         {
             var totalCount = 0;
 
@@ -104,18 +162,28 @@ namespace StringCountChar
             {
                 unchecked
                 {
-                    totalCount += TestTextData.CountUsingLinqAndLocalFunction(SearchChar);
+                    totalCount += TestTextData.CountUsingLinqAndLocalFunction(searchChar);
                 }
             }
             stopwatch.Stop();
+            Trace.Assert(totalCount.ToString().Length != 0);  // Just using the variable
 
-            Trace.Assert(totalCount != 0);  // Just using the variable
+            var timeUs = stopwatch.Elapsed.GetTotalIntegralMicroseconds();
+
+            var speedComparisonString = string.Empty;
+            if (etalonTimeUs.HasValue)
+            {
+                var ratio = (decimal)etalonTimeUs.Value / timeUs;
+                speedComparisonString = $@" : {ratio,5:N1}X faster";
+            }
 
             Console.WriteLine(
-                $@"{nameof(StringHelper.CountUsingLinqAndLocalFunction).PadRight(32)}: {stopwatch.ElapsedMilliseconds:N0} ms ({stopwatch.Elapsed})");
+                $@"{nameof(StringHelper.CountUsingLinqAndLocalFunction).PadRight(32)}: {timeUs,10:N0} us{speedComparisonString}");
+
+            return timeUs;
         }
 
-        private static void TestCountUsingForEach(int iterationCount)
+        private static long TestCountUsingForEach(char searchChar, int iterationCount, long? etalonTimeUs)
         {
             var totalCount = 0;
 
@@ -124,18 +192,28 @@ namespace StringCountChar
             {
                 unchecked
                 {
-                    totalCount += TestTextData.CountUsingForEach(SearchChar);
+                    totalCount += TestTextData.CountUsingForEach(searchChar);
                 }
             }
             stopwatch.Stop();
+            Trace.Assert(totalCount.ToString().Length != 0);  // Just using the variable
 
-            Trace.Assert(totalCount != 0);  // Just using the variable
+            var timeUs = stopwatch.Elapsed.GetTotalIntegralMicroseconds();
+
+            var speedComparisonString = string.Empty;
+            if (etalonTimeUs.HasValue)
+            {
+                var ratio = (decimal)etalonTimeUs.Value / timeUs;
+                speedComparisonString = $@" : {ratio,5:N1}X faster";
+            }
 
             Console.WriteLine(
-                $@"{nameof(StringHelper.CountUsingForEach).PadRight(32)}: {stopwatch.ElapsedMilliseconds:N0} ms ({stopwatch.Elapsed})");
+                $@"{nameof(StringHelper.CountUsingForEach).PadRight(32)}: {timeUs,10:N0} us{speedComparisonString}");
+
+            return timeUs;
         }
 
-        private static void TestCountUsingForEachButNoBranching(int iterationCount)
+        private static long TestCountUsingForEachButNoBranching(char searchChar, int iterationCount, long? etalonTimeUs)
         {
             var totalCount = 0;
 
@@ -144,18 +222,28 @@ namespace StringCountChar
             {
                 unchecked
                 {
-                    totalCount += TestTextData.CountUsingForEachButNoBranching(SearchChar);
+                    totalCount += TestTextData.CountUsingForEachButNoBranching(searchChar);
                 }
             }
             stopwatch.Stop();
+            Trace.Assert(totalCount.ToString().Length != 0);  // Just using the variable
 
-            Trace.Assert(totalCount != 0);  // Just using the variable
+            var timeUs = stopwatch.Elapsed.GetTotalIntegralMicroseconds();
+
+            var speedComparisonString = string.Empty;
+            if (etalonTimeUs.HasValue)
+            {
+                var ratio = (decimal)etalonTimeUs.Value / timeUs;
+                speedComparisonString = $@" : {ratio,5:N1}X faster";
+            }
 
             Console.WriteLine(
-                $@"{nameof(StringHelper.CountUsingForEachButNoBranching).PadRight(32)}: {stopwatch.ElapsedMilliseconds:N0} ms ({stopwatch.Elapsed})");
+                $@"{nameof(StringHelper.CountUsingForEachButNoBranching).PadRight(32)}: {timeUs,10:N0} us{speedComparisonString}");
+
+            return timeUs;
         }
 
-        private static void TestCountUsingSimdWithFix(int iterationCount)
+        private static long TestCountUsingSimdWithUShortLimit(char searchChar, int iterationCount, long? etalonTimeUs)
         {
             var totalCount = 0;
 
@@ -164,15 +252,55 @@ namespace StringCountChar
             {
                 unchecked
                 {
-                    totalCount += TestTextData.CountUsingSimdWithFix(SearchChar);
+                    totalCount += TestTextData.CountUsingSimdWithUShortLimit(searchChar);
                 }
             }
             stopwatch.Stop();
+            Trace.Assert(totalCount.ToString().Length != 0);  // Just using the variable
 
-            Trace.Assert(totalCount != 0);  // Just using the variable
+            var timeUs = stopwatch.Elapsed.GetTotalIntegralMicroseconds();
+
+            var speedComparisonString = string.Empty;
+            if (etalonTimeUs.HasValue)
+            {
+                var ratio = (decimal)etalonTimeUs.Value / timeUs;
+                speedComparisonString = $@" : {ratio,5:N1}X faster";
+            }
 
             Console.WriteLine(
-                $@"{nameof(StringHelper.CountUsingSimdWithFix).PadRight(32)}: {stopwatch.ElapsedMilliseconds:N0} ms ({stopwatch.Elapsed})");
+                $@"{nameof(StringHelper.CountUsingSimdWithUShortLimit).PadRight(32)}: {timeUs,10:N0} us{speedComparisonString}");
+
+            return timeUs;
+        }
+
+        private static long TestCountUsingSimd(char searchChar, int iterationCount, long? etalonTimeUs)
+        {
+            var totalCount = 0;
+
+            var stopwatch = Stopwatch.StartNew();
+            for (var index = 0; index < iterationCount; index++)
+            {
+                unchecked
+                {
+                    totalCount += TestTextData.CountUsingSimd(searchChar);
+                }
+            }
+            stopwatch.Stop();
+            Trace.Assert(totalCount.ToString().Length != 0);  // Just using the variable
+
+            var timeUs = stopwatch.Elapsed.GetTotalIntegralMicroseconds();
+
+            var speedComparisonString = string.Empty;
+            if (etalonTimeUs.HasValue)
+            {
+                var ratio = (decimal)etalonTimeUs.Value / timeUs;
+                speedComparisonString = $@" : {ratio,5:N1}X faster";
+            }
+
+            Console.WriteLine(
+                $@"{nameof(StringHelper.CountUsingSimd).PadRight(32)}: {timeUs,10:N0} us{speedComparisonString}");
+
+            return timeUs;
         }
     }
 }

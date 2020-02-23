@@ -2,16 +2,15 @@
 
     <PropertyGroup>
         <OutputType>Exe</OutputType>
-        <TargetFramework>netcoreapp3.1</TargetFramework>
+        <TargetFrameworks>netcoreapp3.1;net48</TargetFrameworks>
         <OutputPath>..\..\bin\$(Platform)\$(Configuration)\</OutputPath>
+        <RestoreProjectStyle>PackageReference</RestoreProjectStyle>
     </PropertyGroup>
 
-    <ItemGroup>
-      <None Include="TestExecutor.cs">
-        <DesignTime>True</DesignTime>
-        <AutoGen>True</AutoGen>
-        <DependentUpon>TestExecutor.tt</DependentUpon>
-      </None>
+    <ItemGroup Condition="'$(TargetFramework)' == 'net48'">
+        <PackageReference Include="System.Memory" Version="4.5.3" />
+        <PackageReference Include="System.Numerics.Vectors" Version="4.5.0" />
+        <PackageReference Include="System.Runtime.CompilerServices.Unsafe" Version="4.7.0" />
     </ItemGroup>
 
     <ItemGroup>
@@ -21,9 +20,9 @@
             <DependentUpon>Resources.resx</DependentUpon>
         </Compile>
         <Compile Update="TestExecutor.cs">
-          <DesignTime>True</DesignTime>
-          <AutoGen>True</AutoGen>
-          <DependentUpon>TestExecutor.tt</DependentUpon>
+            <DesignTime>True</DesignTime>
+            <AutoGen>True</AutoGen>
+            <DependentUpon>TestExecutor.tt</DependentUpon>
         </Compile>
     </ItemGroup>
 
@@ -35,14 +34,14 @@
     </ItemGroup>
 
     <ItemGroup>
-      <None Update="TestExecutor.tt">
-        <Generator>TextTemplatingFileGenerator</Generator>
-        <LastGenOutput>TestExecutor.cs</LastGenOutput>
-      </None>
+        <None Update="TestExecutor.tt">
+            <Generator>TextTemplatingFileGenerator</Generator>
+            <LastGenOutput>TestExecutor.cs</LastGenOutput>
+        </None>
     </ItemGroup>
 
     <ItemGroup>
-      <Service Include="{508349b6-6b84-4df5-91f0-309beebad82d}" />
+        <Service Include="{508349b6-6b84-4df5-91f0-309beebad82d}" />
     </ItemGroup>
 
 </Project>
