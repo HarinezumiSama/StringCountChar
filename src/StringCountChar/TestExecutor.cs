@@ -9,6 +9,10 @@
 using System;
 using System.Diagnostics;
 using System.Numerics;
+using System.Runtime.InteropServices;
+#if NET7_0_OR_GREATER
+using System.Runtime.Intrinsics;
+#endif
 using StringCountChar.Properties;
 
 namespace StringCountChar
@@ -27,8 +31,22 @@ namespace StringCountChar
             Console.ResetColor();
 
             Console.ForegroundColor = ConsoleColor.Green;
+            Console.WriteLine($@"CLR version: {RuntimeEnvironment.GetSystemVersion()}");
+
+            Console.ForegroundColor = ConsoleColor.Magenta;
             Console.WriteLine($@"{nameof(Vector)}.{nameof(Vector.IsHardwareAccelerated)}: {Vector.IsHardwareAccelerated}");
-            Console.WriteLine($@"{nameof(Vector)}<{nameof(UInt16)}>.{nameof(Vector<ushort>.Count)}: {Vector<ushort>.Count}");
+#if NET7_0_OR_GREATER
+            Console.WriteLine($@"{nameof(Vector64)}.{nameof(Vector64.IsHardwareAccelerated)}: {Vector64.IsHardwareAccelerated}");
+            Console.WriteLine($@"{nameof(Vector128)}.{nameof(Vector128.IsHardwareAccelerated)}: {Vector128.IsHardwareAccelerated}");
+            Console.WriteLine($@"{nameof(Vector256)}.{nameof(Vector256.IsHardwareAccelerated)}: {Vector256.IsHardwareAccelerated}");
+#endif
+#if NET8_0_OR_GREATER
+            Console.WriteLine($@"{nameof(Vector512)}.{nameof(Vector512.IsHardwareAccelerated)}: {Vector512.IsHardwareAccelerated}");
+#endif
+
+            Console.ForegroundColor = ConsoleColor.Green;
+            Console.WriteLine($@"{nameof(Vector)}<{nameof(UInt16)}>.{nameof(Vector<UInt16>.Count)}: {Vector<UInt16>.Count}");
+            Console.WriteLine($@"{nameof(Vector)}<{nameof(UInt32)}>.{nameof(Vector<UInt32>.Count)}: {Vector<UInt32>.Count}");
             Console.WriteLine($@"{nameof(TestTextData)}.{nameof(TestTextData.Length)}: {TestTextData.Length:N0}");
             Console.ResetColor();
 
