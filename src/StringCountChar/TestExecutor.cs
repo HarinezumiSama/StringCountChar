@@ -9,6 +9,11 @@
 using System;
 using System.Diagnostics;
 using System.Numerics;
+using System.Runtime.InteropServices;
+#if NETCOREAPP3_0_OR_GREATER
+using System.Runtime.Intrinsics;
+using System.Runtime.Intrinsics.X86;
+#endif
 using StringCountChar.Properties;
 
 namespace StringCountChar
@@ -17,18 +22,123 @@ namespace StringCountChar
     {
         private static readonly string TestTextData = Resources.TestTextData;
 
-        private static readonly char[] SearchChars = new[] { 'i', 'e' };
+        private static readonly char[] SearchChars = new[] { '\n', 'i', 'e' };
         private static readonly int[] IterationCounts = new[] { 10, 50, 100, 500, 1000 };
 
-        private const string MismatchMessage = @" (ERROR: mismatch)";
+        private const string MismatchMessage = "\x0020(ERROR: mismatch)";
 
         public static int Run()
         {
             Console.ResetColor();
 
             Console.ForegroundColor = ConsoleColor.Green;
+            Console.WriteLine($@"CLR version: {RuntimeEnvironment.GetSystemVersion()}");
+            Console.WriteLine();
+
+            Console.ForegroundColor = ConsoleColor.Magenta;
             Console.WriteLine($@"{nameof(Vector)}.{nameof(Vector.IsHardwareAccelerated)}: {Vector.IsHardwareAccelerated}");
-            Console.WriteLine($@"{nameof(Vector)}<{nameof(UInt16)}>.{nameof(Vector<ushort>.Count)}: {Vector<ushort>.Count}");
+#if NET7_0_OR_GREATER
+            Console.WriteLine($@"{nameof(Vector64)}.{nameof(Vector64.IsHardwareAccelerated)}: {Vector64.IsHardwareAccelerated}");
+            Console.WriteLine($@"{nameof(Vector128)}.{nameof(Vector128.IsHardwareAccelerated)}: {Vector128.IsHardwareAccelerated}");
+            Console.WriteLine($@"{nameof(Vector256)}.{nameof(Vector256.IsHardwareAccelerated)}: {Vector256.IsHardwareAccelerated}");
+#endif
+#if NET8_0_OR_GREATER
+            Console.WriteLine($@"{nameof(Vector512)}.{nameof(Vector512.IsHardwareAccelerated)}: {Vector512.IsHardwareAccelerated}");
+#endif
+            Console.WriteLine();
+
+            Console.ForegroundColor = ConsoleColor.Magenta;
+#if NETCOREAPP3_0_OR_GREATER
+            Console.WriteLine($@"{nameof(Aes)}.{nameof(Aes.IsSupported)}: {Aes.IsSupported}");
+            Console.WriteLine($@"{nameof(Aes)}.{nameof(Aes.X64)}.{nameof(Aes.X64.IsSupported)}: {Aes.X64.IsSupported}");
+            Console.WriteLine($@"{nameof(Avx)}.{nameof(Avx.IsSupported)}: {Avx.IsSupported}");
+            Console.WriteLine($@"{nameof(Avx)}.{nameof(Avx.X64)}.{nameof(Avx.X64.IsSupported)}: {Avx.X64.IsSupported}");
+#endif
+#if NET9_0_OR_GREATER
+            Console.WriteLine($@"{nameof(Avx10v1)}.{nameof(Avx10v1.IsSupported)}: {Avx10v1.IsSupported}");
+            Console.WriteLine($@"{nameof(Avx10v1)}.{nameof(Avx10v1.X64)}.{nameof(Avx10v1.X64.IsSupported)}: {Avx10v1.X64.IsSupported}");
+            Console.WriteLine($@"{nameof(Avx10v1)}.{nameof(Avx10v1.V512)}.{nameof(Avx10v1.V512.IsSupported)}: {Avx10v1.V512.IsSupported}");
+            Console.WriteLine($@"{nameof(Avx10v1)}.{nameof(Avx10v1.V512)}.{nameof(Avx10v1.V512.X64)}.{nameof(Avx10v1.V512.X64.IsSupported)}: {Avx10v1.V512.X64.IsSupported}");
+#endif
+#if NETCOREAPP3_0_OR_GREATER
+            Console.WriteLine($@"{nameof(Avx2)}.{nameof(Avx2.IsSupported)}: {Avx2.IsSupported}");
+            Console.WriteLine($@"{nameof(Avx2)}.{nameof(Avx2.X64)}.{nameof(Avx2.X64.IsSupported)}: {Avx2.X64.IsSupported}");
+#endif
+#if NET8_0_OR_GREATER
+            Console.WriteLine($@"{nameof(Avx512BW)}.{nameof(Avx512BW.IsSupported)}: {Avx512BW.IsSupported}");
+            Console.WriteLine($@"{nameof(Avx512BW)}.{nameof(Avx512BW.VL)}.{nameof(Avx512BW.VL.IsSupported)}: {Avx512BW.VL.IsSupported}");
+            Console.WriteLine($@"{nameof(Avx512BW)}.{nameof(Avx512BW.X64)}.{nameof(Avx512BW.X64.IsSupported)}: {Avx512BW.X64.IsSupported}");
+            Console.WriteLine($@"{nameof(Avx512CD)}.{nameof(Avx512CD.IsSupported)}: {Avx512CD.IsSupported}");
+            Console.WriteLine($@"{nameof(Avx512CD)}.{nameof(Avx512CD.VL)}.{nameof(Avx512CD.VL.IsSupported)}: {Avx512CD.VL.IsSupported}");
+            Console.WriteLine($@"{nameof(Avx512CD)}.{nameof(Avx512CD.X64)}.{nameof(Avx512CD.X64.IsSupported)}: {Avx512CD.X64.IsSupported}");
+            Console.WriteLine($@"{nameof(Avx512DQ)}.{nameof(Avx512DQ.IsSupported)}: {Avx512DQ.IsSupported}");
+            Console.WriteLine($@"{nameof(Avx512DQ)}.{nameof(Avx512DQ.VL)}.{nameof(Avx512DQ.VL.IsSupported)}: {Avx512DQ.VL.IsSupported}");
+            Console.WriteLine($@"{nameof(Avx512DQ)}.{nameof(Avx512DQ.X64)}.{nameof(Avx512DQ.X64.IsSupported)}: {Avx512DQ.X64.IsSupported}");
+            Console.WriteLine($@"{nameof(Avx512F)}.{nameof(Avx512F.IsSupported)}: {Avx512F.IsSupported}");
+            Console.WriteLine($@"{nameof(Avx512F)}.{nameof(Avx512F.VL)}.{nameof(Avx512F.VL.IsSupported)}: {Avx512F.VL.IsSupported}");
+            Console.WriteLine($@"{nameof(Avx512F)}.{nameof(Avx512F.X64)}.{nameof(Avx512F.X64.IsSupported)}: {Avx512F.X64.IsSupported}");
+            Console.WriteLine($@"{nameof(Avx512Vbmi)}.{nameof(Avx512Vbmi.IsSupported)}: {Avx512Vbmi.IsSupported}");
+            Console.WriteLine($@"{nameof(Avx512Vbmi)}.{nameof(Avx512Vbmi.VL)}.{nameof(Avx512Vbmi.VL.IsSupported)}: {Avx512Vbmi.VL.IsSupported}");
+            Console.WriteLine($@"{nameof(Avx512Vbmi)}.{nameof(Avx512Vbmi.X64)}.{nameof(Avx512Vbmi.X64.IsSupported)}: {Avx512Vbmi.X64.IsSupported}");
+#endif
+#if NET9_0_OR_GREATER
+            Console.WriteLine($@"{nameof(AvxVnni)}.{nameof(AvxVnni.IsSupported)}: {AvxVnni.IsSupported}");
+            Console.WriteLine($@"{nameof(AvxVnni)}.{nameof(AvxVnni.X64)}.{nameof(AvxVnni.X64.IsSupported)}: {AvxVnni.X64.IsSupported}");
+#endif
+#if NETCOREAPP3_0_OR_GREATER
+            Console.WriteLine($@"{nameof(Bmi1)}.{nameof(Bmi1.IsSupported)}: {Bmi1.IsSupported}");
+            Console.WriteLine($@"{nameof(Bmi1)}.{nameof(Bmi1.X64)}.{nameof(Bmi1.X64.IsSupported)}: {Bmi1.X64.IsSupported}");
+            Console.WriteLine($@"{nameof(Bmi2)}.{nameof(Bmi2.IsSupported)}: {Bmi2.IsSupported}");
+            Console.WriteLine($@"{nameof(Bmi2)}.{nameof(Bmi2.X64)}.{nameof(Bmi2.X64.IsSupported)}: {Bmi2.X64.IsSupported}");
+            Console.WriteLine($@"{nameof(Fma)}.{nameof(Fma.IsSupported)}: {Fma.IsSupported}");
+            Console.WriteLine($@"{nameof(Fma)}.{nameof(Fma.X64)}.{nameof(Fma.X64.IsSupported)}: {Fma.X64.IsSupported}");
+            Console.WriteLine($@"{nameof(Lzcnt)}.{nameof(Lzcnt.IsSupported)}: {Lzcnt.IsSupported}");
+            Console.WriteLine($@"{nameof(Lzcnt)}.{nameof(Lzcnt.X64)}.{nameof(Lzcnt.X64.IsSupported)}: {Lzcnt.X64.IsSupported}");
+            Console.WriteLine($@"{nameof(Pclmulqdq)}.{nameof(Pclmulqdq.IsSupported)}: {Pclmulqdq.IsSupported}");
+            Console.WriteLine($@"{nameof(Pclmulqdq)}.{nameof(Pclmulqdq.X64)}.{nameof(Pclmulqdq.X64.IsSupported)}: {Pclmulqdq.X64.IsSupported}");
+            Console.WriteLine($@"{nameof(Popcnt)}.{nameof(Popcnt.IsSupported)}: {Popcnt.IsSupported}");
+            Console.WriteLine($@"{nameof(Popcnt)}.{nameof(Popcnt.X64)}.{nameof(Popcnt.X64.IsSupported)}: {Popcnt.X64.IsSupported}");
+            Console.WriteLine($@"{nameof(Sse)}.{nameof(Sse.IsSupported)}: {Sse.IsSupported}");
+            Console.WriteLine($@"{nameof(Sse)}.{nameof(Sse.X64)}.{nameof(Sse.X64.IsSupported)}: {Sse.X64.IsSupported}");
+            Console.WriteLine($@"{nameof(Sse2)}.{nameof(Sse2.IsSupported)}: {Sse2.IsSupported}");
+            Console.WriteLine($@"{nameof(Sse2)}.{nameof(Sse2.X64)}.{nameof(Sse2.X64.IsSupported)}: {Sse2.X64.IsSupported}");
+            Console.WriteLine($@"{nameof(Sse3)}.{nameof(Sse3.IsSupported)}: {Sse3.IsSupported}");
+            Console.WriteLine($@"{nameof(Sse3)}.{nameof(Sse3.X64)}.{nameof(Sse3.X64.IsSupported)}: {Sse3.X64.IsSupported}");
+            Console.WriteLine($@"{nameof(Sse41)}.{nameof(Sse41.IsSupported)}: {Sse41.IsSupported}");
+            Console.WriteLine($@"{nameof(Sse41)}.{nameof(Sse41.X64)}.{nameof(Sse41.X64.IsSupported)}: {Sse41.X64.IsSupported}");
+            Console.WriteLine($@"{nameof(Sse42)}.{nameof(Sse42.IsSupported)}: {Sse42.IsSupported}");
+            Console.WriteLine($@"{nameof(Sse42)}.{nameof(Sse42.X64)}.{nameof(Sse42.X64.IsSupported)}: {Sse42.X64.IsSupported}");
+#endif
+#if NET5_0_OR_GREATER
+            Console.WriteLine($@"{nameof(X86Base)}.{nameof(X86Base.IsSupported)}: {X86Base.IsSupported}");
+            Console.WriteLine($@"{nameof(X86Base)}.{nameof(X86Base.X64)}.{nameof(X86Base.X64.IsSupported)}: {X86Base.X64.IsSupported}");
+#endif
+#if NET7_0_OR_GREATER
+            Console.WriteLine($@"{nameof(X86Serialize)}.{nameof(X86Serialize.IsSupported)}: {X86Serialize.IsSupported}");
+            Console.WriteLine($@"{nameof(X86Serialize)}.{nameof(X86Serialize.X64)}.{nameof(X86Serialize.X64.IsSupported)}: {X86Serialize.X64.IsSupported}");
+#endif
+            Console.WriteLine();
+
+            Console.ForegroundColor = ConsoleColor.Green;
+#if true
+            Console.WriteLine(GetVectorCountInfo<ushort>());
+            Console.WriteLine(GetVectorCountInfo<uint>());
+#endif
+#if NETCOREAPP3_0_OR_GREATER
+            Console.WriteLine(GetVector64CountInfo<ushort>());
+            Console.WriteLine(GetVector64CountInfo<uint>());
+            Console.WriteLine(GetVector128CountInfo<ushort>());
+            Console.WriteLine(GetVector128CountInfo<uint>());
+            Console.WriteLine(GetVector256CountInfo<ushort>());
+            Console.WriteLine(GetVector256CountInfo<uint>());
+#endif
+#if NET8_0_OR_GREATER
+            Console.WriteLine(GetVector512CountInfo<ushort>());
+            Console.WriteLine(GetVector512CountInfo<uint>());
+#endif
+            Console.WriteLine();
+
+            Console.ForegroundColor = ConsoleColor.Yellow;
             Console.WriteLine($@"{nameof(TestTextData)}.{nameof(TestTextData.Length)}: {TestTextData.Length:N0}");
             Console.ResetColor();
 
@@ -41,7 +151,7 @@ namespace StringCountChar
             {
                 Console.WriteLine();
                 Console.ForegroundColor = ConsoleColor.Cyan;
-                Console.WriteLine($@"* Search character: '{searchChar}'");
+                Console.WriteLine($@"* Search character: {GetSearchCharInfo(searchChar)}");
                 Console.ResetColor();
 
                 var valueOfCountUsingLinqAndLambda = TestTextData.CountUsingLinqAndLambda(searchChar);
@@ -80,6 +190,7 @@ namespace StringCountChar
                         (valueOfCountUsingSimd == valueOfCountUsingLinqAndLambda ? null: MismatchMessage)}");
 
             }
+
 #if DEBUG
             Console.WriteLine();
             Console.ForegroundColor = ConsoleColor.Yellow;
@@ -104,12 +215,133 @@ namespace StringCountChar
             return 0;
 #endif
         }
+
+#if true
+        private static string GetVectorCountInfo<T>()
+            where T : struct
+        {
+            const string NotAvailable = "N/A";
+
+            string countString;
+            try
+            {
+#if NET7_0_OR_GREATER
+                countString = Vector<T>.IsSupported ? Vector<T>.Count.ToString() : NotAvailable;
+#else
+                countString = Vector<T>.Count.ToString();
+#endif
+            }
+            catch (NotSupportedException)
+            {
+                countString = NotAvailable;
+            }
+
+            return $@"{nameof(Vector)}<{typeof(T).Name}>.{nameof(Vector<T>.Count)}: {countString}";
+        }
+#endif
+
+#if NETCOREAPP3_0_OR_GREATER
+        private static string GetVector64CountInfo<T>()
+            where T : struct
+        {
+            const string NotAvailable = "N/A";
+
+            string countString;
+            try
+            {
+#if NET7_0_OR_GREATER
+                countString = Vector64<T>.IsSupported ? Vector64<T>.Count.ToString() : NotAvailable;
+#else
+                countString = Vector64<T>.Count.ToString();
+#endif
+            }
+            catch (NotSupportedException)
+            {
+                countString = NotAvailable;
+            }
+
+            return $@"{nameof(Vector64)}<{typeof(T).Name}>.{nameof(Vector64<T>.Count)}: {countString}";
+        }
+#endif
+
+#if NETCOREAPP3_0_OR_GREATER
+        private static string GetVector128CountInfo<T>()
+            where T : struct
+        {
+            const string NotAvailable = "N/A";
+
+            string countString;
+            try
+            {
+#if NET7_0_OR_GREATER
+                countString = Vector128<T>.IsSupported ? Vector128<T>.Count.ToString() : NotAvailable;
+#else
+                countString = Vector128<T>.Count.ToString();
+#endif
+            }
+            catch (NotSupportedException)
+            {
+                countString = NotAvailable;
+            }
+
+            return $@"{nameof(Vector128)}<{typeof(T).Name}>.{nameof(Vector128<T>.Count)}: {countString}";
+        }
+#endif
+
+#if NETCOREAPP3_0_OR_GREATER
+        private static string GetVector256CountInfo<T>()
+            where T : struct
+        {
+            const string NotAvailable = "N/A";
+
+            string countString;
+            try
+            {
+#if NET7_0_OR_GREATER
+                countString = Vector256<T>.IsSupported ? Vector256<T>.Count.ToString() : NotAvailable;
+#else
+                countString = Vector256<T>.Count.ToString();
+#endif
+            }
+            catch (NotSupportedException)
+            {
+                countString = NotAvailable;
+            }
+
+            return $@"{nameof(Vector256)}<{typeof(T).Name}>.{nameof(Vector256<T>.Count)}: {countString}";
+        }
+#endif
+
+#if NET8_0_OR_GREATER
+        private static string GetVector512CountInfo<T>()
+            where T : struct
+        {
+            const string NotAvailable = "N/A";
+
+            string countString;
+            try
+            {
+#if NET7_0_OR_GREATER
+                countString = Vector512<T>.IsSupported ? Vector512<T>.Count.ToString() : NotAvailable;
+#else
+                countString = Vector512<T>.Count.ToString();
+#endif
+            }
+            catch (NotSupportedException)
+            {
+                countString = NotAvailable;
+            }
+
+            return $@"{nameof(Vector512)}<{typeof(T).Name}>.{nameof(Vector512<T>.Count)}: {countString}";
+        }
+#endif
+
 #if !DEBUG
         private static void RunPerformanceTests(char searchChar, int iterationCount)
         {
             Console.WriteLine();
             Console.ForegroundColor = ConsoleColor.Cyan;
-            Console.WriteLine($@"*** Running performance tests (character: '{searchChar}', iteration count: {iterationCount}).");
+            Console.WriteLine($@"*** [Running performance tests] Search character: {GetSearchCharInfo(searchChar)}. Iteration count: {iterationCount}.");
             Console.ResetColor();
 
             ////long? etalonTimeUs = null;
@@ -122,6 +354,9 @@ namespace StringCountChar
             var timeOfCountUsingSimd = TestCountUsingSimd(searchChar, iterationCount, timeOfCountUsingLinqAndLambda);
         }
 #endif
+
+        private static string GetSearchCharInfo(char searchChar)
+            => $@"'\x{(ushort)searchChar:X4}'{(searchChar < '\x0020' ? string.Empty : $"\x0020('{searchChar}')")}";
 
         private static long TestCountUsingLinqAndLambda(char searchChar, int iterationCount, long? etalonTimeUs)
         {

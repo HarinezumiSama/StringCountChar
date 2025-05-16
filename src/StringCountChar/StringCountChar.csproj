@@ -1,16 +1,18 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+﻿<?xml version="1.0" encoding="utf-8"?>
 
+<Project Sdk="Microsoft.NET.Sdk">
     <PropertyGroup>
         <OutputType>Exe</OutputType>
-        <TargetFrameworks>netcoreapp3.1;net48</TargetFrameworks>
+        <TargetFrameworks>net452;net462;net472;net48;netcoreapp3.1;net5.0;net6.0;net7.0;net8.0;net9.0</TargetFrameworks>
         <OutputPath>..\..\bin\$(Platform)\$(Configuration)\</OutputPath>
         <RestoreProjectStyle>PackageReference</RestoreProjectStyle>
+        <CheckEolTargetFramework>false</CheckEolTargetFramework>
     </PropertyGroup>
 
-    <ItemGroup Condition="'$(TargetFramework)' == 'net48'">
-        <PackageReference Include="System.Memory" Version="4.5.3" />
+    <ItemGroup Condition="'$(TargetFramework)' == 'net452' or '$(TargetFramework)' == 'net462' or '$(TargetFramework)' == 'net472' or '$(TargetFramework)' == 'net48'">
+        <PackageReference Include="System.Memory" Version="4.5.5" />
         <PackageReference Include="System.Numerics.Vectors" Version="4.5.0" />
-        <PackageReference Include="System.Runtime.CompilerServices.Unsafe" Version="4.7.0" />
+        <PackageReference Include="System.Runtime.CompilerServices.Unsafe" Version="5.0.0" />
     </ItemGroup>
 
     <ItemGroup>
@@ -43,5 +45,4 @@
     <ItemGroup>
         <Service Include="{508349b6-6b84-4df5-91f0-309beebad82d}" />
     </ItemGroup>
-
 </Project>
